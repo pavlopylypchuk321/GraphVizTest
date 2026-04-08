@@ -10,6 +10,53 @@
 #include <graphviz/cgraph.h>
 #include <graphviz/gvc.h>
 
+#include <cstdio>
+#include <cstdlib>
+
+#if __has_include(<graphviz/pathgeom.h>)
+#include <graphviz/pathgeom.h>
+#define HAVE_GRAPHVIZ_PATHGEOM_H 1
+#elif __has_include(<pathgeom.h>)
+#include <pathgeom.h>
+#define HAVE_GRAPHVIZ_PATHGEOM_H 1
+#else
+#define HAVE_GRAPHVIZ_PATHGEOM_H 0
+#endif
+
+static void demoFreePath()
+{
+#if HAVE_GRAPHVIZ_PATHGEOM_H
+    // freePath() releases both the polyline struct and its point buffer.
+    // Typical flow: allocate/fill Ppolyline_t, use it, then freePath(polyline).
+    auto *polyline = static_cast<Ppolyline_t *>(std::malloc(sizeof(Ppolyline_t)));
+    if (!polyline) {
+        std::fprintf(stderr, "demoFreePath: malloc failed for Ppolyline_t\n");
+        return;
+    }
+
+    polyline->pn = 3;
+    polyline->ps = static_cast<Ppoint_t *>(std::malloc(sizeof(Ppoint_t) * static_cast<size_t>(polyline->pn)));
+    if (!polyline->ps) {
+        std::fprintf(stderr, "demoFreePath: malloc failed for Ppoint_t[]\n");
+        std::free(polyline);
+        return;
+    }
+
+    polyline->ps[0] = Ppoint_t{0, 0};
+    polyline->ps[1] = Ppoint_t{50, 20};
+    polyline->ps[2] = Ppoint_t{100, 0};
+
+    std::fprintf(stderr,
+                 "demoFreePath: created polyline with %d points; freeing via freePath()\n",
+                 polyline->pn);
+    freePath(polyline);
+#else
+    std::fprintf(stderr,
+                 "demoFreePath: <graphviz/pathgeom.h> not found.\n"
+                 "Install Graphviz development headers so this demo can compile.\n");
+#endif
+}
+
 static QByteArray renderDotToSvg(const char *dot)
 {
     GVC_t *gvc = gvContext();
@@ -49,7 +96,7 @@ static QByteArray renderDotToSvg(const char *dot)
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-
+    demoFreePath();
     static const char kSampleDot[] = R"(digraph G {
   rankdir=LR;
   hello -> world [label="GraphViz + Qt"];

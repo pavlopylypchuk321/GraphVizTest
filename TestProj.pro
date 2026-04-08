@@ -8,7 +8,8 @@ SOURCES += \
 # GraphViz via MacPorts (pkg-config also works if PKG_CONFIG_PATH includes /opt/local/lib/pkgconfig)
 macx {
     INCLUDEPATH += /opt/local/include
-    LIBS += -L/opt/local/lib -lgvc -lcgraph -lcdt
+    # freePath() lives in Graphviz's pathplan library.
+    LIBS += -L/opt/local/lib -lgvc -lcgraph -lcdt -lpathplan
     QMAKE_LFLAGS += -Wl,-rpath,/opt/local/lib
 }
 
